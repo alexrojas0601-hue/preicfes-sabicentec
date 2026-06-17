@@ -374,6 +374,149 @@ function renderStaff(tab){
  else if(tab==="alerts") box.innerHTML=`<table class="report"><tr><th>Estudiante</th><th>Curso</th><th>Área</th><th>Alerta</th></tr>${h.filter(x=>x.pct<60).map(x=>`<tr><td>${esc(x.student)}</td><td>${x.course}</td><td>${x.area}</td><td><span class="sem ${riskTag(x.pct).cls}">${x.pct}%</span></td></tr>`).join("")||"<tr><td colspan='4'>Sin alertas.</td></tr>"}</table>`;
  else box.innerHTML="<ol><li>Aplicar diagnóstico por grado y área.</li><li>Separar estudiantes por nivel de apoyo, estándar y avanzado.</li><li>Entrenar con tablas, gráficas, textos extensos y casos ciudadanos.</li><li>Reunión semanal docente con análisis de errores frecuentes.</li></ol>";
 }
+
+// ===== SABI 1.1 MOTOR ANTIRREPETICIÓN =====
+const BP={
+lectura:["tesis","postura","proposito","conector","comparar","ironia","infografia","tabla","falacia","evidencia","contraargumento","tono","idea","conclusion","fuente","editorial","norma","grafica","cientifico","metacognicion"],
+matematicas:["proporcion","porcentaje","barras","linea","promedio","probabilidad","area","perimetro","lineal","patron","unidades","razon","escala","descuento","volumen","estimacion","tabla","modelo","aleatorio","argumento"],
+ciencias:["variable_ind","variable_dep","control","hipotesis","temperatura","tabla_exp","modelo","energia","mezcla","fuerza","ecosistema","contaminacion","estado","circuito","densidad","metodo","causa","evidencia","conclusion","prediccion"],
+biologia:["cadena","red","celula","organelo","genetica","prob_gen","digestivo","circulatorio","respiracion","adaptacion","evolucion","equilibrio","fotosintesis","microbio","ciclo","salud","homeostasis","energia","mutualismo","poblacion"],
+sociales:["conflicto","participacion","derechos","tabla_part","fuentes","territorio","economia","constitucion","restaurativa","pluralidad","poder","digital","migracion","ambiente","memoria","actores","decision","politica","norma","ciudadania"],
+ingles:["notice","email","dialogue","schedule","ad","warning","invitation","story","main","infer","purpose","reference","form","instruction","opinion","compare","announcement","message","sign","note"]
+};
+function N(seed,mod,base){return (base||0)+((seed*37+grade()*13+selectedLevel*17)%mod)}
+function V(kind,n){if(kind==="bar")return barHTML("Datos del contexto",["A","B","C","D"],[N(n,18,12),N(n+2,18,18),N(n+4,18,16),N(n+6,18,20)]);if(kind==="line")return lineHTML("Cambio observado",["Inicio","Día 2","Día 3","Día 4"],[N(n,9,18),N(n+1,9,22),N(n+2,9,27),N(n+3,9,31)]);if(kind==="table")return tableHTML(["Categoría","Dato 1","Dato 2"],[["Grupo A",N(n,25,30),N(n+1,20,12)],["Grupo B",N(n+2,25,30),N(n+3,20,12)],["Grupo C",N(n+4,25,30),N(n+5,20,12)]]);return""}
+function sq(area,lv,g,ctx,stem,ok,ds,exp,imp,vis,trap){return assignOptions(q(area,lv,g,ctx,stem,ok,ds,exp,imp,vis||"",trap||"lectura rápida sin evidencia"))}
+function sabiDiverse(area,b,lv,g,n){
+ let a=N(n,30,20), c=N(n+1,20,10), d=N(n+2,15,5), tema=["agua","convivencia","lectura","tecnología","ambiente","salud","deporte","transporte","energía","alimentos"][n%10];
+ if(area==="lectura"){
+  let M={
+  tesis:[`Un columnista afirma que ${tema} mejora cuando se enseña a pensar y no solo a repetir.`,`¿Cuál es la tesis?`,`Aprender exige comprender y argumentar, no solo repetir.`,[`Toda repetición garantiza comprensión.`,`Pensar no sirve en evaluaciones.`,`El tema no tiene relación con aprender.`],`La tesis es la postura defendida por el autor.`,`Identificar tesis, argumento y ejemplo.`],
+  postura:[`El texto dice: “La tecnología puede ayudar, pero no reemplaza la lectura lenta ni la conversación”.`,`¿Qué postura se infiere?`,`Equilibrada: acepta la tecnología, pero reconoce límites.`,[`Rechaza toda tecnología.`,`Afirma que leer ya no importa.`,`Defiende usar pantallas sin límite.`],`El conector “pero” introduce matiz.`,`Detectar matices y condiciones.`],
+  proposito:[`Campaña: “Antes de compartir una noticia, revisa la fuente”.`,`¿Cuál es el propósito?`,`Persuadir para verificar información.`,[`Narrar una historia.`,`Vender un periódico.`,`Describir una impresora.`],`Busca cambiar una conducta del lector.`,`Distinguir informar, persuadir, narrar.`],
+  conector:[`Camila leyó la gráfica con calma. Por eso eligió la tendencia general.`,`“Por eso” indica`,`consecuencia.`,[`oposición.`,`duda.`,`enumeración.`],`Conecta una causa con un resultado.`,`Estudiar conectores.`],
+  comparar:[`Texto A: leer mejora vocabulario. Texto B: leer mejora participación ciudadana.`,`¿Cómo se relacionan?`,`El segundo amplía el primero.`,[`Lo contradice totalmente.`,`No tienen relación.`,`El primero niega la lectura.`],`Ambos valoran la lectura desde efectos distintos.`,`Comparar posturas.`],
+  ironia:[`Caricatura: un estudiante mira un libro cerrado y dice “no entiendo”; el libro responde “primero ábreme”.`,`¿Qué critica?`,`Esperar comprender sin leer.`,[`Que los libros hablen.`,`Que estudiar sea imposible.`,`Que leer no requiera acción.`],`La ironía revela una actitud pasiva.`,`Interpretar mensajes implícitos.`],
+  infografia:[`Infografía: 1 leer contexto, 2 identificar tarea, 3 descartar opciones sin evidencia.`,`¿Qué debe hacerse antes de responder?`,`Comprender contexto y tarea.`,[`Escoger la opción más larga.`,`Responder por intuición.`,`Ignorar el enunciado.`],`El proceso inicia con lectura del contexto.`,`Seguir pasos de lectura crítica.`],
+  tabla:[`Una tabla compara opiniones sobre uniforme escolar.`,`¿Qué habilidad se evalúa?`,`Reconocer semejanzas y diferencias entre perspectivas.`,[`Memorizar nombres.`,`Calcular área.`,`Identificar fórmula química.`],`Comparar opiniones exige analizar perspectivas.`,`Usar cuadros comparativos.`],
+  falacia:[`“Todos usan celular en clase, entonces debe ser correcto usarlo siempre”.`,`¿Qué falla tiene?`,`Confunde frecuencia con corrección.`,[`Presenta evidencia suficiente.`,`Define con precisión.`,`Diferencia causa y consecuencia.`],`Que algo ocurra mucho no prueba que sea adecuado.`,`Detectar generalizaciones.`],
+  evidencia:[`Un autor defiende dormir bien y cita un estudio con mejores resultados en estudiantes descansados.`,`¿Qué función cumple el estudio?`,`Apoyar la afirmación con evidencia.`,[`Cambiar de tema.`,`Eliminar la tesis.`,`Presentar una receta.`],`El estudio funciona como soporte.`,`Diferenciar afirmación y evidencia.`]
+  };
+  let k=M[b]||M[Object.keys(M)[n%Object.keys(M).length]];return sq(area,lv,g,k[0],k[1],k[2],k[3],k[4],k[5],b==="tabla"?V("table",n):b==="grafica"?V("bar",n):"");
+ }
+ if(area==="matematicas"){
+  let M={
+  proporcion:[`Para ${a} estudiantes se usan ${c} vasos de jugo; para ${a*2} estudiantes se mantiene proporción.`,`¿Cuántos vasos se necesitan?`,`${c*2} vasos`,[`${c+a} vasos`,`${c} vasos`,`${a*2} vasos`],`Al duplicar estudiantes, se duplican vasos.`,`Identificar proporciones.`],
+  porcentaje:[`En un curso de 40 estudiantes, ${20+n%15} aprobaron.`,`¿Qué procedimiento halla el porcentaje?`,`Dividir aprobados entre 40 y multiplicar por 100.`,[`Sumar aprobados y 40.`,`Restar 40 menos aprobados.`,`Multiplicar aprobados por 40.`],`Porcentaje = parte/total ×100.`,`Practicar parte y total.`],
+  promedio:[`Tres puntajes son ${a}, ${a+5} y ${a+10}.`,`¿Cuál es el promedio?`,`${a+5}`,[`${a}`,`${a+10}`,`${a+15}`],`Se suman y se divide entre 3.`,`Repasar media aritmética.`],
+  probabilidad:[`Una bolsa tiene ${c} fichas azules y ${d} rojas.`,`¿Probabilidad de sacar roja?`,`${d}/(${c}+${d})`,[`${c}/(${c}+${d})`,`${d}/${c}`,`${c}/${d}`],`Favorables sobre posibles.`,`Diferenciar parte y total.`],
+  area:[`Un rectángulo mide ${c} m por ${d} m.`,`¿Cuál es el área?`,`${c*d} m²`,[`${2*(c+d)} m`,`${c+d} m²`,`${c*d*2} m²`],`Área = largo × ancho.`,`No confundir área y perímetro.`],
+  perimetro:[`Un terreno rectangular mide ${c} m por ${d} m.`,`¿Qué operación calcula perímetro?`,`2×(${c}+${d})`,[`${c}×${d}`,`${c}+${d}`,`${c}²+${d}²`],`El perímetro suma lados.`,`Diferenciar perímetro de superficie.`],
+  lineal:[`Un taxi cobra $${a*100} fijo y $${c*100} por km.`,`¿Modelo para x km?`,`${a*100}+${c*100}x`,[`${a*100}x+${c*100}`,`${a+c}x`,`x/${c}`],`Hay costo fijo y costo variable.`,`Identificar constante y variable.`],
+  patron:[`Secuencia: ${c}, ${c+3}, ${c+6}, ${c+9}, ...`,`¿Siguiente término?`,`${c+12}`,[`${c+10}`,`${c+9}`,`${c+15}`],`Aumenta de 3 en 3.`,`Encontrar la regla.`],
+  barras:[`La gráfica compara cuatro grupos.`,`¿Cómo se identifica el mayor valor?`,`Con la barra de mayor altura.`,[`Con la primera barra siempre.`,`Con la barra más baja.`,`Sin mirar la escala.`],`Las barras comparan magnitudes.`,`Leer ejes y escala.`],
+  linea:[`La gráfica muestra cambio de temperatura.`,`Un tramo ascendente indica`,`aumento de la variable.`,[`disminución.`,`valor constante.`,`error siempre.`],`La línea ascendente expresa crecimiento.`,`Interpretar tendencias.`]
+  };
+  let k=M[b]||M[Object.keys(M)[n%Object.keys(M).length]];return sq(area,lv,g,k[0],k[1],k[2],k[3],k[4],k[5],b==="barras"?V("bar",n):b==="linea"?V("line",n):b==="tabla"?V("table",n):"");
+ }
+ if(area==="ciencias"||area==="biologia"){
+  let M={
+  variable_ind:[`Un grupo cambia la luz recibida por plantas y mide crecimiento.`,`Variable independiente:`,`La cantidad de luz.`,[`El crecimiento.`,`La regla.`,`El color del cuaderno.`],`Es lo que se modifica intencionalmente.`,`Distinguir variables.`],
+  variable_dep:[`Se observa cómo cambia el crecimiento cuando varía la luz.`,`Variable dependiente:`,`El crecimiento de las plantas.`,[`La luz asignada.`,`La fecha.`,`El nombre del grupo.`],`Es el resultado medido.`,`Leer qué se mide.`],
+  hipotesis:[`“Si aumenta la luz, entonces crecerá más la planta”.`,`Esta frase es una`,`hipótesis.`,[`conclusión definitiva.`,`dato medido.`,`norma.`],`Predice una relación comprobable.`,`Diferenciar hipótesis y conclusión.`],
+  tabla_exp:[`La tabla resume resultados de un experimento.`,`Antes de concluir se debe`,`comparar los datos con la hipótesis.`,[`elegir el dato favorito.`,`ignorar diferencias.`,`cambiar la pregunta.`],`La conclusión depende de evidencia.`,`Usar datos.`],
+  energia:[`Una linterna usa pilas y produce luz.`,`Transformación principal:`,`química a luminosa.`,[`sonora a nuclear.`,`luminosa a química siempre.`,`ninguna.`],`La pila almacena energía química.`,`Relacionar dispositivo y transformación.`],
+  cadena:[`Cadena: pasto → conejo → zorro.`,`Si disminuye el pasto, primero`,`disminuye alimento para el conejo.`,[`aumenta el zorro.`,`nada cambia.`,`el conejo produce pasto.`],`El productor sostiene al consumidor primario.`,`Analizar cadenas tróficas.`],
+  celula:[`Una célula requiere energía utilizable.`,`Organelo más relacionado:`,`Mitocondria.`,[`Núcleo.`,`Pared celular.`,`Ribosoma siempre.`],`Participa en respiración celular.`,`Asociar estructura y función.`],
+  genetica:[`Cruce Aa × Aa; A dominante, a recesivo.`,`Genotipo que expresa recesivo:`,`aa`,[`AA`,`Aa`,`A`],`No hay alelo dominante.`,`Repasar genotipo/fenotipo.`],
+  respiracion:[`Al correr aumentan respiración y frecuencia cardiaca.`,`Esto ocurre porque`,`los músculos requieren más oxígeno y energía.`,[`el corazón se detiene.`,`el oxígeno no se necesita.`,`la sangre no participa.`],`Los sistemas responden al esfuerzo.`,`Relacionar sistemas corporales.`],
+  contaminacion:[`En un río con residuos disminuyen organismos sensibles.`,`Inferencia razonable:`,`la calidad del agua puede deteriorarse.`,[`el río está más sano.`,`los residuos no afectan.`,`no puede analizarse nada.`],`Los organismos sensibles son evidencia.`,`Interpretar bioindicadores.`]
+  };
+  let k=M[b]||M[Object.keys(M)[n%Object.keys(M).length]];return sq(area,lv,g,k[0],k[1],k[2],k[3],k[4],k[5],b==="tabla_exp"?V("table",n):b==="contaminacion"?V("line",n):"");
+ }
+ if(area==="sociales"){
+  let M={
+  conflicto:[`Comerciantes apoyan una vía; vecinos temen ruido; ambientalistas piden proteger zona verde.`,`Decisión más democrática:`,`escuchar actores y evaluar impactos.`,[`decidir por quien tenga más dinero.`,`decidir al azar.`,`ignorar diferencias.`],`La democracia reconoce perspectivas.`,`Analizar actores e intereses.`],
+  participacion:[`Aumentó la participación en gobierno escolar.`,`Valor fortalecido:`,`participación.`,[`censura.`,`imposición.`,`indiferencia.`],`Participar es base democrática.`,`Relacionar acción y principio.`],
+  derechos:[`Un estudiante exige ser escuchado, pero no deja hablar a otros.`,`Desconoce que`,`los derechos propios respetan los ajenos.`,[`solo algunos tienen derechos.`,`escuchar no importa.`,`gana quien grita.`],`Derechos implican deberes.`,`Comprender reciprocidad.`],
+  fuentes:[`Dos fuentes narran un hecho con énfasis distintos.`,`Lector crítico debe`,`comparar origen, intención y evidencia.`,[`creer la más corta.`,`ignorar ambas.`,`escoger la que confirme su opinión.`],`Las fuentes se contrastan.`,`Evaluar confiabilidad.`],
+  territorio:[`Nuevas vías generan empleo, ruido y desplazamiento.`,`Análisis más completo:`,`hay beneficios y conflictos para distintos grupos.`,[`todo beneficia a todos.`,`nadie se afecta.`,`el territorio nunca cambia.`],`El contexto muestra efectos diferenciados.`,`Evitar absolutos.`],
+  economia:[`Una familia compara precios antes de comprar.`,`Realiza una práctica de`,`decidir según recursos y necesidades.`,[`eliminar el mercado.`,`crear leyes nacionales.`,`ignorar escasez.`],`La economía implica elegir con recursos limitados.`,`Comprender costo de oportunidad.`],
+  constitucion:[`Una norma escolar debe respetar derechos fundamentales.`,`Esto se debe a que`,`las normas legítimas respetan principios superiores.`,[`toda norma viola derechos.`,`los derechos no importan.`,`solo decide una persona.`],`La legalidad requiere respeto por derechos.`,`Relacionar norma y derechos.`],
+  tabla_part:[`La tabla muestra participación por año.`,`Interpretación válida:`,`comparar datos antes de concluir.`,[`el último dato siempre es falso.`,`los números no comunican.`,`la tabla no sirve.`],`Las tablas muestran cambios.`,`Leer datos.`]
+  };
+  let k=M[b]||M[Object.keys(M)[n%Object.keys(M).length]];return sq(area,lv,g,k[0],k[1],k[2],k[3],k[4],k[5],b==="tabla_part"?V("table",n):"");
+ }
+ if(area==="ingles"){
+  let M={
+  notice:[`NOTICE: Please keep the library quiet and return books before Friday.`,`What should students do?`,`Keep quiet and return books.`,[`Eat in the library.`,`Play loud music.`,`Keep books forever.`],`The notice gives instructions.`,`Identify action verbs.`],
+  email:[`Hi Ana, the meeting is now on Thursday at 3 p.m. Bring your notebook.`,`What changed?`,`The day of the meeting.`,[`The teacher's name.`,`The notebook color.`,`The school building.`],`“Now on Thursday” shows change.`,`Find time markers.`],
+  dialogue:[`A: I failed the quiz. B: Don’t give up. Let’s review together.`,`What is B doing?`,`Encouraging and offering help.`,[`Complaining.`,`Canceling class.`,`Ignoring A.`],`B supports A.`,`Infer intention.`],
+  ad:[`SALE: Buy two notebooks and get one pencil free.`,`This text is`,`a promotion.`,[`a warning.`,`a personal letter.`,`a weather report.`],`Sale and offer indicate promotion.`,`Recognize text type.`],
+  warning:[`WARNING: Wet floor. Walk carefully.`,`People should`,`walk carefully.`,[`run quickly.`,`sit down.`,`ignore the sign.`],`A warning prevents risk.`,`Identify warning language.`],
+  invitation:[`You are invited to English Day on Friday at 10 a.m.`,`Purpose:`,`to invite someone to an event.`,[`describe a recipe.`,`report an accident.`,`sell a car.`],`“You are invited” states purpose.`,`Recognize communicative purpose.`]
+  };
+  let k=M[b]||M[Object.keys(M)[n%Object.keys(M).length]];return sq(area,lv,g,k[0],k[1],k[2],k[3],k[4],k[5]);
+ }
+ return sq("lectura",lv,g,"Texto breve sobre aprendizaje.","¿Qué exige la pregunta?","Leer con evidencia.",["Responder de memoria.","Elegir la más larga.","Ignorar el contexto."],"Se debe responder con base en el contexto.","Leer antes de escoger.");
+}
+function makeQuestion(area,lv,g,n){
+ let ar=(area==="simulacro"||area==="mixto")?["lectura","matematicas","ciencias","biologia","sociales","ingles"][n%6]:area;
+ let bps=BP[ar]||BP.lectura;
+ let bp=bps[(n*7+lv*5+g*3+Math.floor(Math.random()*bps.length))%bps.length];
+ return sabiDiverse(ar,bp,lv,g,n);
+}
+function buildExam(area,lv){
+ const g=grade(), arr=[], seen=new Set(); let guard=0;
+ while(arr.length<50 && guard<800){
+   guard++;
+   const it=makeQuestion(area,lv,g,guard+arr.length*17);
+   const sig=it.area+"|"+it.ctx.slice(0,80)+"|"+it.stem+"|"+it.options[it.correct];
+   if(seen.has(sig)) continue;
+   seen.add(sig); arr.push(it);
+ }
+ while(arr.length<50){let it=makeQuestion(area,lv,g,2000+arr.length*31);it.ctx+="\n\nCaso SABI "+(arr.length+1)+": analiza la evidencia.";arr.push(it)}
+ return sh(arr);
+}
+
+
+// ===== Refuerzo 1.1b: cada blueprint no implementado crea ítem propio =====
+const SABI_DIVERSE_BASE = sabiDiverse;
+sabiDiverse = function(area,b,lv,g,n){
+ const supported={
+  lectura:["tesis","postura","proposito","conector","comparar","ironia","infografia","tabla","falacia","evidencia"],
+  matematicas:["proporcion","porcentaje","promedio","probabilidad","area","perimetro","lineal","patron","barras","linea"],
+  ciencias:["variable_ind","variable_dep","hipotesis","tabla_exp","energia","cadena","celula","genetica","respiracion","contaminacion"],
+  biologia:["variable_ind","variable_dep","hipotesis","tabla_exp","energia","cadena","celula","genetica","respiracion","contaminacion"],
+  sociales:["conflicto","participacion","derechos","fuentes","territorio","economia","constitucion","tabla_part"],
+  ingles:["notice","email","dialogue","ad","warning","invitation"]
+ };
+ if((supported[area]||[]).includes(b)) return SABI_DIVERSE_BASE(area,b,lv,g,n);
+ const tema=["ambiente escolar","alimentación","redes sociales","transporte público","lectura digital","deporte","salud comunitaria","uso del agua","energía","convivencia"][n%10];
+ if(area==="lectura"){
+   const ctx=`Fragmento tipo ${b}: En un texto sobre ${tema}, el autor presenta una situación, una razón y una consecuencia. La idea no se responde por memoria, sino relacionando intención, evidencia y contexto.`;
+   return sq(area,lv,g,ctx,`¿Qué análisis corresponde mejor al fragmento cuando la tarea es ${b.replaceAll("_"," ")}?`,`La respuesta debe apoyarse en la relación entre intención, evidencia y contexto.`,[`Elegir una opción solo porque suena extensa.`,`Responder con una opinión personal sin usar el texto.`,`Tomar una palabra aislada como si fuera toda la idea.`],`El ítem exige leer el propósito y relacionarlo con evidencia textual.`,`Practicar lectura crítica con intención, evidencia e inferencia.`, b.includes("grafica")?V("bar",n):"");
+ }
+ if(area==="matematicas"){
+   const val=N(n,30,10), val2=N(n+3,20,5);
+   const ctx=`Situación tipo ${b}: Un grupo de estudiantes debe interpretar datos de ${tema}. Se requiere seleccionar la operación o representación que modela correctamente el problema.`;
+   return sq(area,lv,g,ctx,`¿Cuál razonamiento matemático es válido para resolver una situación de ${b.replaceAll("_"," ")}?`,`Identificar los datos relevantes, elegir el modelo y justificar el resultado.`,[`Usar todos los números sin analizar unidades.`,`Escoger la operación más familiar aunque no represente el contexto.`,`Responder por el tamaño de los números.`],`La matemática tipo Saber evalúa modelación, no solo cálculo mecánico.`,`Revisar datos, unidades, representación y pregunta.`, b.includes("tabla")?V("table",n):b.includes("graf")?V("bar",n):"");
+ }
+ if(area==="ciencias"||area==="biologia"){
+   const ctx=`Situación experimental tipo ${b}: En una investigación sobre ${tema}, se observan datos, posibles causas y una conclusión que debe sustentarse con evidencia.`;
+   return sq(area,lv,g,ctx,`¿Qué conclusión científica se ajusta mejor al caso de ${b.replaceAll("_"," ")}?`,`La conclusión debe basarse en la evidencia disponible y reconocer la relación causa-efecto.`,[`La conclusión puede elegirse sin mirar datos.`,`Una sola observación siempre prueba todo.`,`La opinión personal vale más que la evidencia.`],`Las ciencias evalúan interpretación de datos y explicación de fenómenos.`,`Diferenciar hipótesis, evidencia, variable y conclusión.`, b.includes("graf")||b.includes("poblacion")?V("line",n):b.includes("tabla")?V("table",n):"");
+ }
+ if(area==="sociales"){
+   const ctx=`Caso social tipo ${b}: En una comunidad se presenta una tensión relacionada con ${tema}. Existen actores con intereses distintos, normas y posibles consecuencias.`;
+   return sq(area,lv,g,ctx,`¿Cuál análisis ciudadano es más pertinente para el caso de ${b.replaceAll("_"," ")}?`,`Comparar actores, derechos, intereses y consecuencias antes de decidir.`,[`Imponer la opinión del grupo más fuerte.`,`Ignorar a los actores afectados.`,`Elegir sin considerar normas ni derechos.`],`Las competencias ciudadanas exigen analizar perspectivas y consecuencias.`,`Ubicar actores, intereses, derechos y alternativas.`, b.includes("tabla")?V("table",n):"");
+ }
+ if(area==="ingles"){
+   const ctx=`${b.toUpperCase()}: Students read a short school text about ${tema}. They must identify meaning, purpose or implied information.`;
+   return sq(area,lv,g,ctx,`What should the reader understand in this ${b.replaceAll("_"," ")} text?`,`The purpose and the key information in context.`,[`Only one isolated word.`,`A meaning not supported by the text.`,`A personal opinion unrelated to the message.`],`English reading asks for purpose, detail and inference.`,`Read the complete message before choosing.`, "");
+ }
+ return SABI_DIVERSE_BASE(area,b,lv,g,n);
+};
+
 if(typeof window!=="undefined") window.addEventListener("DOMContentLoaded",init);
 </script>
 </body>
